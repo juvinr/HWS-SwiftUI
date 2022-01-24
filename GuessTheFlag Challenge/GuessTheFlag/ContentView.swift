@@ -13,6 +13,10 @@ struct ContentView: View {
     @State private var scoreTitle = ""
     @State private var countries = ["Estonia", "France", "Germany", "Ireland", "Italy", "Nigeria", "Poland", "Russia", "Spain", "UK", "US"].shuffled()
     @State private var correctAnswer = Int.random(in: 0...2)
+    @State private var userScore = 0
+    @State private var selectedFlag = -1
+    @State private var questionCount = 0
+    @State private var isGameOver = false
     
     var body: some View {
         
@@ -49,6 +53,7 @@ struct ContentView: View {
                     ForEach(0..<3) { number in
                         Button {
                             flagTapped(number)
+                            selectedFlag = number
                         } label: {
                             Image(countries[number])
                                 .renderingMode(.original)
@@ -69,7 +74,7 @@ struct ContentView: View {
                 Spacer()
                 
                 // Score Text
-                Text("Score: ???")
+                Text("Score: \(userScore)")
                     .foregroundColor(.white)
                     .font(.title.bold())
                 
@@ -80,7 +85,17 @@ struct ContentView: View {
         .alert(scoreTitle, isPresented: $showingScore) {
             Button("Continue", action: askQuestion)
         } message: {
-            Text("Your score is ???")
+            if scoreTitle == "Correct" {
+                Text("Your score is \(userScore)")
+            } else if scoreTitle == "Wrong" {
+                Text("Wrong! That's the flag of \(countries[selectedFlag])")
+            }
+            
+        }
+        .alert("Game Over!", isPresented: $isGameOver) {
+            Button("OK", action: reset)
+        } message: {
+            Text("Your final score is \(userScore)")
         }
     }
     
@@ -88,16 +103,32 @@ struct ContentView: View {
     func flagTapped(_ number: Int) {
         if number == correctAnswer {
             scoreTitle = "Correct"
+            userScore += 1
         } else {
             scoreTitle = "Wrong"
+            if userScore > 0 {
+                userScore -= 1
+            }
         }
         showingScore = true
+        questionCount += 1
+        if questionCount == 8 {
+            showingScore = false
+            isGameOver = true
+        }
     }
     
     // Ask Question
     func askQuestion() {
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
+    }
+    
+    // Reset Game
+    func reset() {
+        isGameOver = false
+        userScore = 0
+        questionCount = 0
     }
 }
 
